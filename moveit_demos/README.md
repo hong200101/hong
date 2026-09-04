@@ -7,10 +7,12 @@
 ```
 moveit_demos/
 ├── README.md                    # 本文件
+├── moveit_gazebo_demo.py        # Gazebo 仿真控制（新增）⭐
 ├── moveit_simple_demo.py        # 简单控制示例（推荐新手）
 ├── moveit_basic_demo.py         # 基础控制示例
 ├── moveit_advanced_demo.py      # 高级控制示例
 ├── moveit_gripper_demo.py       # 夹爪控制示例
+├── Gazebo使用指南.md            # Gazebo 仿真详细教程
 └── requirements.txt             # Python 依赖
 ```
 
@@ -91,6 +93,36 @@ python3 moveit_simple_demo.py
 ```
 
 ## 📚 Demo 说明
+
+### 0. moveit_gazebo_demo.py - Gazebo 仿真控制 ⭐ 新增
+
+**功能特点：**
+- 在 Gazebo 物理仿真环境中运行
+- 完整的物理引擎支持
+- 可视化避障和场景管理
+- 无需真实机械臂
+
+**包含演示：**
+- ✅ 基础移动（Gazebo 环境）
+- ✅ 在 Gazebo 中画圆形
+- ✅ 在 Gazebo 中画正方形
+- ✅ Gazebo 抓取和放置演示
+- ✅ 避障演示（添加虚拟障碍物）
+- ✅ 场景对象管理
+
+**运行方式：**
+```bash
+# 1. 启动 Gazebo + MoveIt
+ros2 launch agx_arm_moveit demo.launch.py \
+  arm_type:=piper use_sim_time:=true
+
+# 2. 运行 Demo
+python3 moveit_gazebo_demo.py
+```
+
+**详细说明：** 参见 `Gazebo使用指南.md`
+
+---
 
 ### 1. moveit_simple_demo.py - 简单控制示例 ⭐ 推荐新手
 

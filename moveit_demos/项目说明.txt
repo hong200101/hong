@@ -6,24 +6,28 @@
 --------------------------------------------------------------------------------
 c:\Users\Hong.Li\Desktop\agx_arm_ros-ros2\agx_arm_ros-ros2\moveit_demos\
 
-📁 已创建的文件（共 10 个）
+📁 已创建的文件（共 14 个）⭐ 更新
 --------------------------------------------------------------------------------
 
-【文档类】(4个)
+【文档类】(5个)
 1. 开始阅读.md          - 项目入口文档，从这里开始！⭐⭐⭐⭐⭐
 2. 快速参考.md          - 命令和代码速查表
 3. 使用指南.md          - 详细中文使用教程
-4. README.md            - 完整英文技术文档
+4. Gazebo使用指南.md    - Gazebo 仿真完整教程 ⭐ 新增
+5. README.md            - 完整英文技术文档
 
-【Demo 程序】(4个)
-5. moveit_simple_demo.py     - 简单控制示例（推荐新手）⭐⭐⭐⭐⭐
-6. moveit_basic_demo.py      - 基础概念学习
-7. moveit_advanced_demo.py   - 高级轨迹规划
-8. moveit_gripper_demo.py    - 夹爪控制示例
+【Demo 程序】(5个)
+6. moveit_gazebo_demo.py     - Gazebo 仿真控制 ⭐ 新增
+7. moveit_simple_demo.py     - 简单控制示例（推荐新手）
+8. moveit_basic_demo.py      - 基础概念学习
+9. moveit_advanced_demo.py   - 高级轨迹规划
+10. moveit_gripper_demo.py   - 夹爪控制示例
 
-【工具脚本】(2个)
-9. quick_start.sh       - 交互式快速启动脚本
-10. requirements.txt    - Python 依赖列表
+【工具脚本】(4个)
+11. quick_start.sh      - 真机交互式启动脚本
+12. start_gazebo.sh     - Gazebo 交互式启动脚本 ⭐ 新增
+13. requirements.txt    - Python 依赖列表
+14. 项目说明.txt        - 本文件
 
 🎯 推荐使用顺序
 --------------------------------------------------------------------------------
