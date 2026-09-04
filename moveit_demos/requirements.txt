@@ -1,0 +1,15 @@
+# MoveIt Demo 所需的 Python 依赖
+
+# 坐标变换库
+transforms3d>=0.4.1
+
+# 如果使用 tf_transformations（推荐）
+# 注意：这个需要从源码安装或使用系统包
+# sudo apt install ros-$ROS_DISTRO-tf-transformations
+
+# ROS2 相关（通常已通过 apt 安装）
+# ros-humble-moveit-py 或 ros-jazzy-moveit-py
+# ros-humble-moveit-commander 或 ros-jazzy-moveit-commander
+
+# 其他工具库（可选）
+numpy>=1.20.0
