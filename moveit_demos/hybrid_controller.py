@@ -64,21 +64,33 @@ class HybridController(Node):
             10
         )
         
-        # MIT 控制参数
+        # MIT 控制参数（基于官方推荐值）
+        # 标准 Piper: 关节123 -> Kp=5.5 Kd=0.35, 关节456 -> Kp=10 Kd=0.8
         self.mit_params = {
-            'compliant': {  # 柔顺模式（接近物体时）
-                'kp': 20.0,
-                'kd': 1.0,
+            'compliant': {  # 柔顺模式（官方推荐值）
+                'kp_123': 5.5,   # 关节 1-3
+                'kd_123': 0.35,
+                'kp_456': 10.0,  # 关节 4-6
+                'kd_456': 0.8,
             },
-            'stiff': {  # 刚性模式（远离物体时）
-                'kp': 100.0,
-                'kd': 2.0,
+            'stiff': {  # 刚性模式（快速运动）
+                'kp_123': 10.0,
+                'kd_123': 0.5,
+                'kp_456': 20.0,
+                'kd_456': 1.2,
             },
-            'damping': {  # 纯阻尼模式（接触时）
-                'kp': 5.0,
-                'kd': 2.0,
+            'damping': {  # 阻尼模式（接触保护）
+                'kp_123': 3.0,
+                'kd_123': 0.3,
+                'kp_456': 5.0,
+                'kd_456': 0.6,
             }
         }
+        
+        # 期望速度控制（v_des）
+        # False: v_des=0，阻尼模式，更稳定（推荐）
+        # True: 需要规划速度，通过位置微分得到
+        self.use_velocity_control = False
         
         # 控制频率（Hz）
         self.control_rate = 100
@@ -199,12 +211,27 @@ class HybridController(Node):
         
         params = self.mit_params[mode]
         
+        # 根据关节索引选择参数（关节1-3 和 4-6 使用不同参数）
+        if 1 <= joint_index <= 3:
+            kp = params['kp_123']
+            kd = params['kd_123']
+        elif 4 <= joint_index <= 6:
+            kp = params['kp_456']
+            kd = params['kd_456']
+        else:
+            self.logger.error(f'无效的关节索引: {joint_index}')
+            return
+        
+        # v_des 默认为 0（阻尼模式，更稳定）
+        if not self.use_velocity_control:
+            v_des = 0.0
+        
         msg = MoveMITMsg()
         msg.joint_index = [joint_index]
         msg.p_des = [p_des]
         msg.v_des = [v_des]
-        msg.kp = [params['kp']]
-        msg.kd = [params['kd']]
+        msg.kp = [kp]
+        msg.kd = [kd]
         msg.torque = [t_ff]
         
         self.mit_pub.publish(msg)
@@ -228,15 +255,28 @@ class HybridController(Node):
         params = self.mit_params[mode]
         num_joints = len(joint_positions)
         
-        if joint_velocities is None:
+        # v_des 默认为 0（阻尼模式）
+        if joint_velocities is None or not self.use_velocity_control:
             joint_velocities = [0.0] * num_joints
+        
+        # 为不同关节分配不同的 kp, kd
+        kp_list = []
+        kd_list = []
+        for i in range(num_joints):
+            joint_idx = i + 1  # 关节索引从 1 开始
+            if 1 <= joint_idx <= 3:
+                kp_list.append(params['kp_123'])
+                kd_list.append(params['kd_123'])
+            elif 4 <= joint_idx <= 6:
+                kp_list.append(params['kp_456'])
+                kd_list.append(params['kd_456'])
         
         msg = MoveMITMsg()
         msg.joint_index = list(range(1, num_joints + 1))
         msg.p_des = joint_positions
         msg.v_des = joint_velocities
-        msg.kp = [params['kp']] * num_joints
-        msg.kd = [params['kd']] * num_joints
+        msg.kp = kp_list
+        msg.kd = kd_list
         msg.torque = [0.0] * num_joints
         
         self.mit_pub.publish(msg)
@@ -464,22 +504,32 @@ class HybridController(Node):
         
         return True
     
-    def set_mit_params(self, mode: str, kp: float, kd: float):
+    def set_mit_params(self, mode: str, kp_123: float, kd_123: float, 
+                      kp_456: float, kd_456: float):
         """
         设置 MIT 控制参数
         
         Args:
             mode: 模式名称
-            kp: 位置增益
-            kd: 速度增益
+            kp_123: 关节1-3的位置增益
+            kd_123: 关节1-3的速度增益
+            kp_456: 关节4-6的位置增益
+            kd_456: 关节4-6的速度增益
         """
         if mode in self.mit_params:
-            self.mit_params[mode]['kp'] = kp
-            self.mit_params[mode]['kd'] = kd
-            self.logger.info(f'更新 MIT 参数 [{mode}]: kp={kp}, kd={kd}')
+            self.mit_params[mode]['kp_123'] = kp_123
+            self.mit_params[mode]['kd_123'] = kd_123
+            self.mit_params[mode]['kp_456'] = kp_456
+            self.mit_params[mode]['kd_456'] = kd_456
+            self.logger.info(f'更新 MIT 参数 [{mode}]: '
+                           f'kp_123={kp_123}, kd_123={kd_123}, '
+                           f'kp_456={kp_456}, kd_456={kd_456}')
         else:
-            self.mit_params[mode] = {'kp': kp, 'kd': kd}
-            self.logger.info(f'创建新 MIT 参数模式 [{mode}]: kp={kp}, kd={kd}')
+            self.mit_params[mode] = {
+                'kp_123': kp_123, 'kd_123': kd_123,
+                'kp_456': kp_456, 'kd_456': kd_456
+            }
+            self.logger.info(f'创建新 MIT 参数模式 [{mode}]')
     
     def shutdown(self):
         """清理资源"""

@@ -72,7 +72,15 @@ class BlueTissueGraspSystem(Node):
         
         # 设置 MIT 控制参数
         for mode_name, params in self.config['control']['mit_params'].items():
-            self.controller.set_mit_params(mode_name, params['kp'], params['kd'])
+            self.controller.set_mit_params(
+                mode_name, 
+                params['kp_123'], params['kd_123'],
+                params['kp_456'], params['kd_456']
+            )
+        
+        # 设置速度控制模式
+        if 'use_velocity_control' in self.config['control']:
+            self.controller.use_velocity_control = self.config['control']['use_velocity_control']
         
         # 系统状态
         self.is_vision_started = False
