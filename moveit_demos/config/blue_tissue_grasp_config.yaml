@@ -1,0 +1,70 @@
+# 蓝色纸巾包视觉抓取系统配置文件
+
+# 视觉配置
+vision:
+  width: 640                    # 图像宽度
+  height: 480                   # 图像高度
+  fps: 30                       # 帧率
+  enable_filter: true           # 是否启用深度滤波
+  
+  # 蓝色HSV范围（根据实际环境调整）
+  blue_hsv_lower: [90, 50, 50]   # HSV下界 [H, S, V]
+  blue_hsv_upper: [130, 255, 255] # HSV上界 [H, S, V]
+  
+  min_area: 500                 # 最小检测面积（像素）
+
+# 相机标定参数（需要根据实际安装位置标定！）
+camera_calibration:
+  # 相机在机械臂基座坐标系中的位置（米）
+  position: [0.4, 0.0, 0.5]
+  
+  # 相机姿态（欧拉角，弧度）
+  # roll: 绕X轴旋转, pitch: 绕Y轴旋转, yaw: 绕Z轴旋转
+  orientation: [0.0, 3.14159, 0.0]  # 相机朝下
+
+# 抓取规划配置
+grasp:
+  default_gripper_width: 0.08    # 默认夹爪开口（米）
+  approach_distance: 0.15        # 接近距离（米）
+  grasp_depth_offset: -0.05      # 抓取深度偏移（米，负值向上）
+  grasp_angle: 0.0               # 抓取旋转角度（弧度）
+  retreat_distance: 0.20         # 撤退距离（米）
+  
+  # 工作空间限制（基座坐标系，米）
+  workspace_limits:
+    x: [0.15, 0.6]   # X轴范围
+    y: [-0.4, 0.4]   # Y轴范围
+    z: [0.0, 0.5]    # Z轴范围
+
+# 控制参数配置
+control:
+  # MIT模式控制参数
+  mit_params:
+    compliant:      # 柔顺模式（接近物体）
+      kp: 20.0      # 位置增益
+      kd: 1.0       # 速度增益
+    
+    stiff:          # 刚性模式（快速运动）
+      kp: 100.0
+      kd: 2.0
+    
+    damping:        # 阻尼模式（接触保护）
+      kp: 5.0
+      kd: 2.0
+  
+  compliance_distance: 0.05      # 切换到柔顺控制的距离（米）
+  
+  # 夹爪参数
+  gripper_pre_grasp_width: 0.08  # 预抓取宽度（米）
+  gripper_grasp_width: 0.03      # 抓取宽度（米）
+  gripper_grasp_force: 2.0       # 抓取力（牛顿）
+
+# 行为参数
+behavior:
+  max_detection_attempts: 5      # 最大检测尝试次数
+  detection_interval: 0.5        # 检测间隔（秒）
+  post_grasp_delay: 1.0          # 抓取后延迟（秒）
+  
+  # 放置位置（基座坐标系）
+  place_position: [0.3, 0.3, 0.3]        # [x, y, z] 米
+  place_orientation: [0.0, 1.0, 0.0, 0.0] # 四元数 [qx, qy, qz, qw]
