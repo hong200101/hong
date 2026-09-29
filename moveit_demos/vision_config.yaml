@@ -1,0 +1,66 @@
+# 视觉抓取配置文件 (眼在手上 eye-in-hand)
+
+# 手眼标定结果：末端(link6) → 相机光学坐标系(camera_color_optical_frame)
+# 这是 eye-in-hand 标定的输出，是固定常量
+# 方向约定：把相机坐标系中的点乘上它，得到 link6 坐标系中的点 (T_link6_camera)
+hand_eye_transform:
+  position:
+    x: -0.070701
+    y: -0.000912
+    z: 0.037813
+  quaternion:   # [qx, qy, qz, qw]
+    qx: -0.133285
+    qy: 0.126056
+    qz: -0.659821
+    qw: 0.728684
+
+# 手眼标定使用的坐标系（用于核对，代码里硬编码）
+calibration_frames:
+  robot_base_frame: "base_link"
+  robot_effector_frame: "link6"
+  tracking_base_frame: "camera_color_optical_frame"
+  tracking_marker_frame: "aruco_marker_frame"
+
+# 抓取规划使用的末端坐标系（MoveIt 里配置的 tip link）
+tip_frame: "tcp_link"
+
+# RealSense D435 相机配置
+camera:
+  color_width: 640
+  color_height: 480
+  depth_width: 640
+  depth_height: 480
+  fps: 30
+
+# 蓝色检测参数 (HSV)
+color_detection:
+  blue:
+    hsv_lower: [90, 80, 80]
+    hsv_upper: [130, 255, 255]
+    min_area: 500
+    morphology_kernel_size: 5
+
+# 抓取参数
+grasp:
+  height_offset: 0.15
+  approach_offset: 0.05
+  gripper_open_width: 0.08
+  gripper_close_width: 0.02
+  gripper_force: 2.0
+  place_position:
+    x: 0.25
+    y: -0.15
+    z: 0.20
+
+# MoveIt 规划参数
+moveit:
+  arm_group_name: "arm"
+  gripper_group_name: "gripper"
+  velocity_scaling: 0.2
+  acceleration_scaling: 0.2
+  planning_time: 10.0
+
+# 检测参数
+detection:
+  max_attempts: 50
+  detection_interval: 0.1
