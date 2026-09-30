@@ -1,0 +1,23 @@
+agx_arm_pd_g_controller:
+  ros__parameters:
+    joints: ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"]
+
+    input_topic: "/control/move_mit_joint_states"
+    feedback_topic: "/feedback/joint_states"
+    output_topic: "/control/move_mit"
+
+    control_rate: 200.0
+
+    gains:
+      joint1: {kp: 1.0, kd: 0.1}
+      joint2: {kp: 1.0, kd: 0.1}
+      joint3: {kp: 1.0, kd: 0.1}
+      joint4: {kp: 0.5, kd: 0.05}
+      joint5: {kp: 0.5, kd: 0.05}
+      joint6: {kp: 0.5, kd: 0.05}
+
+    gravity_compensation:
+      enable: true
+      model_path: ""
+      calibration_path: ""
+      torque_scaling: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]

@@ -1,0 +1,87 @@
+pd_g_controller:
+  input_topic:
+    type: string
+    default_value: "~/move_mit_joint_states"
+    description: "sensor_msgs/msg/JointState topic with the joint reference to track."
+  feedback_topic:
+    type: string
+    default_value: "feedback/joint_states"
+    description: "sensor_msgs/msg/JointState topic with the measured robot state, used to evaluate gravity compensation."
+  output_topic:
+    type: string
+    default_value: "~/control/move_mit"
+    description: "agx_arm_msgs/msg/MoveMITMsg topic to publish the PD(+G) commands on."
+  control_rate:
+    type: double
+    default_value: 200.0
+    description: "Rate (Hz) at which commands are published. Decoupled from input_topic's rate so gravity compensation keeps tracking the measured pose even when the reference setpoint updates more slowly."
+    validation:
+      gt<>: [0]
+  joints:
+    type: string_array
+    description: "Ordered joint names to control. A joint's position in this list is the joint_index it is published with in MoveMITMsg. Only JointState entries whose name appears here are forwarded. Required, must be set via YAML."
+  gains:
+    __map_joints:
+      kp:
+        type: double
+        default_value: 1.0
+        description: "MIT-mode position gain (stiffness) for this joint."
+        validation:
+          gt_eq<>: [0]
+      kd:
+        type: double
+        default_value: 0.5
+        description: "MIT-mode velocity gain (damping) for this joint."
+        validation:
+          gt_eq<>: [0]
+      feedforward_torque:
+        type: double
+        default_value: 0.0
+        description: "MIT-mode feed-forward torque added for this joint (on top of gravity compensation, if enabled)."
+  gravity_compensation:
+    enable:
+      type: bool
+      default_value: false
+      description: "Add MuJoCo-based gravity compensation torque to each joint's feed-forward torque."
+    model_path:
+      type: string
+      default_value: ""
+      description: "Path to the robot model used for gravity computation: a MuJoCo .xml, or a .urdf/.xacro (e.g. from agx_arm_description) converted on the fly. Required when enable is true."
+    calibration_path:
+      type: string
+      default_value: ""
+      description: "Optional gravity calibration YAML produced by the gravity calibration procedure. When empty, torque_scaling is applied to the raw MuJoCo torque instead."
+    torque_scaling:
+      type: double_array
+      default_value: [0.25, 0.25, 0.25, 1.0, 1.0, 1.0]
+      description: "Per-joint scaling applied to the raw MuJoCo gravity torque when no calibration file is given. The 0.25 default on joints 1-3 matches Piper firmware <= 1.8.post2, which amplifies MIT torque commands on those joints by 4x; use 1.0 everywhere on newer firmware (see README)."
+  external_torque_estimation:
+    enable:
+      type: bool
+      default_value: false
+      description: "Publish a per-joint external torque estimate on output_topic. Requires gravity_compensation.model_path to be set."
+    output_topic:
+      type: string
+      default_value: "feedback/external_torque"
+      description: "sensor_msgs/msg/JointState topic to publish the external torque estimate on (in the effort field)."
+    method:
+      type: string
+      default_value: "commanded_torque_diff"
+      description: "Estimation method. 'commanded_torque_diff': measured motor torque minus the last commanded MIT torque (kp*(p_des-q)+kd*(v_des-q_dot)+t_ff), falling back to MuJoCo gravity torque alone before the first command. Cheap, but during motion conflates genuine inertial/Coriolis torque with external torque since it has no dynamic model of the arm's own motion. 'momentum_observer': De Luca generalized-momentum residual filter using MuJoCo's mass matrix and bias force, correctly separating inertial/Coriolis torque from external torque and low-pass filtering the result; needs an accurate M(q) (this model's inertia tensors are not identified, only mass/COM, so accuracy is limited until they are). Uses the skew-symmetry property (M_dot=C+C^T) to get C^T(q,q_dot)*q_dot exactly, finite-differencing the mass matrix between control steps for M_dot*q_dot (error O(dt), shrinking with control_rate) rather than approximating C^T with C."
+      validation:
+        one_of<>: [["commanded_torque_diff", "momentum_observer"]]
+    momentum_observer_gain:
+      type: double_array
+      default_value: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+      description: "Per-joint K_I gain (1/s) of the momentum-observer residual filter, ordered like joints. Sets the filter's time constant (1/K_I): higher is faster to respond but noisier, lower is smoother but slower. Only used when method is 'momentum_observer'."
+      validation:
+        lower_element_bounds<>: [0.0]
+  remote_force_feedforward:
+    enable:
+      type: bool
+      default_value: false
+      description: "Add input_topic's effort field (e.g. a remote arm's external torque estimate, cross-fed by a bilateral teleoperation node) to each joint's commanded torque, scaled by torque_scaling."
+    torque_scaling:
+      type: double_array
+      default_value: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+      description: "Per-joint scaling applied to input_topic's effort field before adding it to the commanded torque. Independent of gravity_compensation.torque_scaling, but corrects for the same Piper firmware <= 1.8.post2 4x MIT command amplification on joints 1-3 (see README) since this value is also sent as a commanded torque."
