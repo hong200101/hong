@@ -27,8 +27,8 @@ cd agx_arm_ws/src/agx_arm_ros/moveit_demos
 bash start_vision_grasp.sh
 
 
+## 📦 二、手眼标定流程
 
-手眼标定流程：
 ┌─────────────────────────────────────────────────────────────┐
 │  Step 1  启动机械臂 + MoveIt                                │
 │          
@@ -63,14 +63,41 @@ Rotation
 	w: 0.728684
 
 
+## 📦 三、PD + 重力补偿（PD+G） 控制快速启动
+    通过 MIT 模式向机械臂发送力矩指令，实现柔顺的阻抗控制效果，可用于：
+    推动回位（阻抗回位）柔顺拖动示教  重力补偿悬浮   双边遥操作（配合 remote_force_feedforward）外力估计（配合 external_torque_estimation）
+
+### 使用方式
+launch启动，使用前须先启动机械臂
+	ros2 launch agx_arm_pd_g_controller pd_g_controller.launch.py \
+	  params_file:=$HOME/piper_config/my_pd_g.yaml \   ####替换成具体配置文件的路径
+	  enable_gravity_compensation:=true \
+	  robot_model:=piper \                             
+	  use_gripper:=true
+
+控制器在收到第一条目标参考前不会发布 MIT 指令（安全机制）。必须先发一条目标激活。
+
+	ros2 topic pub --once /control/move_mit_joint_states sensor_msgs/msg/JointState \
+	"{name: ['joint1','joint2','joint3','joint4','joint5','joint6'], 
+	  position: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}"
+
+验证是否运行：ros2 topic info /control/move_mit
+
+输出如下：
+Publisher count: 1     ← PD+G 控制器
+Subscription count: 1  ← 官方驱动
 
 
+推荐比例参数：kp : kd ≈ 10:1
+参考比较柔顺不抖动的值:
+    gains:
+      joint1: {kp: 1.0, kd: 0.1}
+      joint2: {kp: 1.0, kd: 0.1}
+      joint3: {kp: 1.0, kd: 0.1}
+      joint4: {kp: 0.5, kd: 0.05}
+      joint5: {kp: 0.5, kd: 0.05}
+      joint6: {kp: 0.5, kd: 0.05}
 
-
-
-
-
-
-
+Piper 固件对 MIT 力矩指令有内部放大，需按版本调整：固件大于1.8使用 torque_scaling: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
 
